@@ -882,5 +882,8 @@ class separate(Verb):
       return_df.index.names = df.index.names
     else:
       return_df.index.names = [None for _ in df.index.names]
+    if remove:
+      out_columns = [a for b in [[y for y in self.kwargs['into']] if x == key else [x] for x in df.columns] for a in b]
+      return_df = return_df[out_columns]
     return return_df
 
