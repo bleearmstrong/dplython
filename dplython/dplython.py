@@ -844,3 +844,43 @@ class spread(Verb):
     old_data = out_df[spread_index_columns].drop_duplicates()
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
+
+import re
+
+class separate(Verb):
+
+  __name__ = 'separate'
+
+  def __call__(self, df):
+    key = self.args[0]
+    if 'extra' in self.kwargs:
+      extra = self.kwargs['extra']
+    else:
+      extra = 'warn'
+    if 'remove' in self.kwargs:
+      remove = self.kwargs['remove']
+    else:
+      remove = True
+    if 'fill' in self.kwargs:
+      fill = self.kwargs['fill']
+    else:
+      fill = 'warn'
+    if 'n' in self.kwargs:
+      n = self.kwargs['n']
+    else:
+      n = len(self.kwargs['into'])
+    out_df = df.copy()
+    temp_df = out_df[key].str.split(self.kwargs['sep'], n=n, expand=True)
+    temp_df.columns = self.kwargs['into']
+    original_cols = out_df.columns.values.tolist()
+    out_df.reset_index(inplace=True, drop=False)
+    out_indices = [col for col in out_df.columns.values.tolist() if col not in original_cols]
+    temp_df.reset_index(inplace=True, drop=True)
+    return_df = pd.concat([out_df, temp_df], axis=1)
+    return_df.set_index(out_indices, inplace=True)
+    if df.index.names:
+      return_df.index.names = df.index.names
+    else:
+      return_df.index.names = [None for _ in df.index.names]
+    return return_df
+
