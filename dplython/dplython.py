@@ -845,11 +845,25 @@ class spread(Verb):
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
 
-import re
 
 class separate(Verb):
 
   __name__ = 'separate'
+
+  def temp_df_extra(temp_df, extra, into):
+    if temp_df.shape[1] - 2 <= into:
+      return temp_df
+    keep_columns = list(range(into))
+    keep_columns.extend([temp_df.shape[1] - 2, temp_df.shape[1] - 1])
+    drop_columns = [x for x in range(temp_df.shape[1]) if x not in keep_columns]
+    if extra == 'warn':
+      warnings.warn('Extra column(s) being dropped', UserWarning)
+    temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
+    return temp_df
+
+
+  # def temp_df_fill(temp_df, fill, into):
+
 
   def __call__(self, df):
     key = self.args[0]
@@ -869,13 +883,26 @@ class separate(Verb):
       n = self.kwargs['n']
     else:
       n = len(self.kwargs['into'])
+    if 'missing' in self.kwargs:
+      missing = self.kwargs['missing']
+    else:
+      missing = np.nan
     out_df = df.copy()
-    temp_df = out_df[key].str.split(self.kwargs['sep'], n=n, expand=True)
-    temp_df.columns = self.kwargs['into']
+    if extra == 'merge':
+      temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
+    else:
+      temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True)
+    # temp_df.columns = self.kwargs['into']
+    temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(self.kwargs['sep'], n=n)))
+    temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
+    temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
     original_cols = out_df.columns.values.tolist()
     out_df.reset_index(inplace=True, drop=False)
     out_indices = [col for col in out_df.columns.values.tolist() if col not in original_cols]
     temp_df.reset_index(inplace=True, drop=True)
+    # if values don't fill properly, need additional processing to temp_df
+    # if any(pd.Series(map(len, out_df[key].str.split(self.kwargs['sep']))) < len(self.kwargs['into'])):
+    #   print('too')
     return_df = pd.concat([out_df, temp_df], axis=1)
     return_df.set_index(out_indices, inplace=True)
     if df.index.names:
@@ -887,3 +914,12 @@ class separate(Verb):
       return_df = return_df[out_columns]
     return return_df
 
+t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='merge')
+print(t3)
+print('first')
+t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='warn')
+print(t3)
+print('second')
+t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='drop')
+print(t3)
+print('third')
