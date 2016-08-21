@@ -861,6 +861,12 @@ class separate(Verb):
     temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
     return temp_df
 
+  def left_fill(row):
+    n_col = len(row)
+    while not row[n_col - 2]:
+      row[1:(n_col - 1)] = row[0:(n_col - 2)]
+      row[0] = None
+
 
   def temp_df_fill(temp_df, fill, missing, into):
     if any(temp_df.temp_split_lengths < temp_df.temp_desired_lengths):
@@ -871,6 +877,8 @@ class separate(Verb):
         if 5 <  len(too_few_indices):
           warning_string += '...'
         warnings.warn(warning_string, UserWarning)
+      if fill == 'left':
+        temp_df.apply(separate.left_fill)
       temp_df.fillna(missing, inplace=True)
       return temp_df
     else:
@@ -936,3 +944,6 @@ print('second')
 t3 = t2 >> separate('cut', into=('boo','derp', 'herp'), sep='e|i', remove=False, extra='drop')
 print(t3)
 print('third')
+
+t2 >> separate('cut', into=('boo', 'dep', 'hi'), sep='e|i', fill='right')
+t3.iloc[1][5]
