@@ -862,7 +862,20 @@ class separate(Verb):
     return temp_df
 
 
-  # def temp_df_fill(temp_df, fill, into):
+  def temp_df_fill(temp_df, fill, missing, into):
+    if any(temp_df.temp_split_lengths < temp_df.temp_desired_lengths):
+      if fill == 'warn':
+        too_few_indices = temp_df[temp_df.temp_split_lengths < temp_df.temp_desired_lengths].index.tolist()
+        warning_string = 'Too few values in rows with index(es) ' \
+                         + str(too_few_indices[:min(5, len(too_few_indices))])[1:-1]
+        if 5 <  len(too_few_indices):
+          warning_string += '...'
+        warnings.warn(warning_string, UserWarning)
+      temp_df.fillna(missing, inplace=True)
+      return temp_df
+    else:
+      return temp_df
+
 
 
   def __call__(self, df):
@@ -892,17 +905,17 @@ class separate(Verb):
       temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
     else:
       temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True)
-    # temp_df.columns = self.kwargs['into']
     temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(self.kwargs['sep'], n=n)))
     temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
     temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
+    temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
+    temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
+    # temp_df.drop(temp_df.columns[[temp_df.shape[1] - 1, temp_df.shape[1] - 2]], inplace=True)
+    temp_df.columns = self.kwargs['into']
     original_cols = out_df.columns.values.tolist()
     out_df.reset_index(inplace=True, drop=False)
     out_indices = [col for col in out_df.columns.values.tolist() if col not in original_cols]
     temp_df.reset_index(inplace=True, drop=True)
-    # if values don't fill properly, need additional processing to temp_df
-    # if any(pd.Series(map(len, out_df[key].str.split(self.kwargs['sep']))) < len(self.kwargs['into'])):
-    #   print('too')
     return_df = pd.concat([out_df, temp_df], axis=1)
     return_df.set_index(out_indices, inplace=True)
     if df.index.names:
@@ -920,6 +933,6 @@ print('first')
 t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='warn')
 print(t3)
 print('second')
-t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='drop')
+t3 = t2 >> separate('cut', into=('boo','derp', 'herp'), sep='e|i', remove=False, extra='drop')
 print(t3)
 print('third')
