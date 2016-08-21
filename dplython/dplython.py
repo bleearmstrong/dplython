@@ -863,9 +863,10 @@ class separate(Verb):
 
   def left_fill(row):
     n_col = len(row)
-    while not row[n_col - 2]:
-      row[1:(n_col - 1)] = row[0:(n_col - 2)]
+    while row[n_col - 3] is None:
+      row[1:(n_col - 1)] = list(row[0:(n_col - 2)])
       row[0] = None
+    return row
 
 
   def temp_df_fill(temp_df, fill, missing, into):
@@ -878,7 +879,7 @@ class separate(Verb):
           warning_string += '...'
         warnings.warn(warning_string, UserWarning)
       if fill == 'left':
-        temp_df.apply(separate.left_fill)
+        temp_df = temp_df.apply(separate.left_fill, axis=1)
       temp_df.fillna(missing, inplace=True)
       return temp_df
     else:
@@ -918,7 +919,6 @@ class separate(Verb):
     temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
     temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
     temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
-    # temp_df.drop(temp_df.columns[[temp_df.shape[1] - 1, temp_df.shape[1] - 2]], inplace=True)
     temp_df.columns = self.kwargs['into']
     original_cols = out_df.columns.values.tolist()
     out_df.reset_index(inplace=True, drop=False)
@@ -934,16 +934,3 @@ class separate(Verb):
       out_columns = [a for b in [[y for y in self.kwargs['into']] if x == key else [x] for x in df.columns] for a in b]
       return_df = return_df[out_columns]
     return return_df
-
-t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='merge')
-print(t3)
-print('first')
-t3 = t2 >> separate('cut', into=('boo','derp'), sep='e|i', remove=False, extra='warn')
-print(t3)
-print('second')
-t3 = t2 >> separate('cut', into=('boo','derp', 'herp'), sep='e|i', remove=False, extra='drop')
-print(t3)
-print('third')
-
-t2 >> separate('cut', into=('boo', 'dep', 'hi'), sep='e|i', fill='right')
-t3.iloc[1][5]
