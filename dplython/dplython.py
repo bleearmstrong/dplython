@@ -848,6 +848,11 @@ class spread(Verb):
 
 class separate(Verb):
 
+  # TODO add documentation
+  # TODO speed up left-fill
+  # TODO add split by index
+
+
   __name__ = 'separate'
 
   def temp_df_extra(temp_df, extra, into):
@@ -868,7 +873,6 @@ class separate(Verb):
     return temp_df
 
   def left_fill(row, n_col):
-    # n_col = len(row)
     while row[n_col - 3] is None:
       row[1:(n_col - 1)] = list(row[0:(n_col - 2)])
       row[0] = None
