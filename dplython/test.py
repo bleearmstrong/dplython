@@ -1306,6 +1306,16 @@ class TestSeparate(unittest.TestCase):
       npt.assert_array_equal(df_fill_right, true_fill_warn_right)
       npt.assert_array_equal(df_fill_left, true_fill_left)
 
+  def test_missing(self):
+    input_df = load_diamonds() >> head(5)
+    df_missing = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', missing='MISSING')
+    true_missing = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,MISSING,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,MISSING,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_missing, true_missing)
 
 if __name__ == '__main__':
   unittest.main()
