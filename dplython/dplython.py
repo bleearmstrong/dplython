@@ -861,8 +861,8 @@ class separate(Verb):
     temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
     return temp_df
 
-  def left_fill(row):
-    n_col = len(row)
+  def left_fill(row, n_col):
+    # n_col = len(row)
     while row[n_col - 3] is None:
       row[1:(n_col - 1)] = list(row[0:(n_col - 2)])
       row[0] = None
@@ -875,11 +875,11 @@ class separate(Verb):
         too_few_indices = temp_df[temp_df.temp_split_lengths < temp_df.temp_desired_lengths].index.tolist()
         warning_string = 'Too few values in rows with index(es) ' \
                          + str(too_few_indices[:min(5, len(too_few_indices))])[1:-1]
-        if 5 <  len(too_few_indices):
+        if 5 < len(too_few_indices):
           warning_string += '...'
         warnings.warn(warning_string, UserWarning)
       if fill == 'left':
-        temp_df = temp_df.apply(separate.left_fill, axis=1)
+        temp_df = temp_df.apply(separate.left_fill, axis=1, args=(temp_df.shape[1],))
       temp_df.fillna(missing, inplace=True)
       return temp_df
     else:
@@ -888,7 +888,7 @@ class separate(Verb):
 
 
   def __call__(self, df):
-    key = self.args[0]
+    key = self.args[0]._name
     if 'extra' in self.kwargs:
       extra = self.kwargs['extra']
     else:

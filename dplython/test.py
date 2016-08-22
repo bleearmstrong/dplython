@@ -1233,6 +1233,79 @@ China,2000,213766,1280428583""")))
 2,Afghanistan,1999,cases,19987071""")))
     self.assertRaises(ValueError, spread, input_df, X.key, X.value)
 
+class TestSeparate(unittest.TestCase):
+
+  def test_remove(self):
+    input_df = load_diamonds() >> head(5)
+    df_remove_true = input_df >> separate(X.cut, into=('split_1', 'split_2', 'split_3'), sep='e|i')
+    df_remove_false = input_df >> separate(X.cut, into=('split_1', 'split_2', 'split_3'), sep='e|i', remove=False)
+    true_remove_true = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,split_3,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,NaN,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,um,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,um,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_remove_true, true_remove_true)
+    true_remove_false = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,split_1,split_2,split_3
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Id,al,NaN
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Pr,m,um
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,NaN,NaN
+4,0.29,Premium,I,VS2,62.4,58.0,334,4.20,4.23,2.63,Pr,m,um
+5,0.31,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75,Good,NaN,NaN"""))
+    npt.assert_array_equal(df_remove_false, true_remove_false)
+
+  def test_extra(self):
+    input_df = load_diamonds() >> head(5)
+    with warnings.catch_warnings(record=True) as w:
+      warnings.simplefilter('always')
+      input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i')
+      # generates two warnings
+      self.assertTrue(len(w) == 2)
+    df_extra_warn = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', extra='warn')
+    df_extra_drop = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', extra='drop')
+    true_extra_drop_warn = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    df_extra_merge = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', extra='merge')
+    true_extra_merge = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,mium,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,mium,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_extra_warn, true_extra_drop_warn)
+    npt.assert_array_equal(df_extra_drop, true_extra_drop_warn)
+    npt.assert_array_equal(df_extra_merge, true_extra_merge)
+
+  def test_fill(self):
+    input_df = load_diamonds() >> head(5)
+    with warnings.catch_warnings(record=True) as w:
+      warnings.simplefilter('always')
+      input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i')
+      # generates two warnings
+      self.assertTrue(len(w) == 2)
+      df_fill_warn = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', fill='warn')
+      df_fill_right = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', fill='right')
+      true_fill_warn_right = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+      df_fill_left = input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i', fill='left')
+      true_fill_left = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,NaN,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,NaN,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+      npt.assert_array_equal(df_fill_warn, true_fill_warn_right)
+      npt.assert_array_equal(df_fill_right, true_fill_warn_right)
+      npt.assert_array_equal(df_fill_left, true_fill_left)
+
 
 if __name__ == '__main__':
   unittest.main()
