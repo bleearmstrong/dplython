@@ -853,11 +853,17 @@ class separate(Verb):
   def temp_df_extra(temp_df, extra, into):
     if temp_df.shape[1] - 2 <= into:
       return temp_df
+    too_many_indices = temp_df[temp_df.temp_split_lengths > temp_df.temp_desired_lengths].index.tolist()
+    warning_string = 'Too many values in ' + str(len(too_many_indices)) + ' rows with index(es) ' \
+                     + str(too_many_indices[:min(5, len(too_many_indices))])[1:-1]
+    if 5 < len(too_many_indices):
+      warning_string += '...'
+    if extra == 'warn':
+      warnings.warn(warning_string, UserWarning)
     keep_columns = list(range(into))
     keep_columns.extend([temp_df.shape[1] - 2, temp_df.shape[1] - 1])
     drop_columns = [x for x in range(temp_df.shape[1]) if x not in keep_columns]
-    if extra == 'warn':
-      warnings.warn('Extra column(s) being dropped', UserWarning)
+
     temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
     return temp_df
 
@@ -873,7 +879,7 @@ class separate(Verb):
     if any(temp_df.temp_split_lengths < temp_df.temp_desired_lengths):
       if fill == 'warn':
         too_few_indices = temp_df[temp_df.temp_split_lengths < temp_df.temp_desired_lengths].index.tolist()
-        warning_string = 'Too few values in rows with index(es) ' \
+        warning_string = 'Too few values in ' + str(len(too_few_indices)) + ' rows with index(es) ' \
                          + str(too_few_indices[:min(5, len(too_few_indices))])[1:-1]
         if 5 < len(too_few_indices):
           warning_string += '...'
@@ -884,8 +890,6 @@ class separate(Verb):
       return temp_df
     else:
       return temp_df
-
-
 
   def __call__(self, df):
     key = self.args[0]._name
