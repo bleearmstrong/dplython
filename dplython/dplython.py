@@ -851,6 +851,7 @@ class separate(Verb):
   # TODO add documentation
   # TODO speed up left-fill
   # TODO add split by index
+  # TODO fix grouping issue (?)
 
 
   __name__ = 'separate'
@@ -918,15 +919,32 @@ class separate(Verb):
     else:
       missing = np.nan
     out_df = df.copy()
-    if extra == 'merge':
-      temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
+    if isinstance(self.kwargs['sep'], str):
+      if extra == 'merge':
+        temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
+      else:
+        temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True)
+      temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(self.kwargs['sep'], n=n)))
+      temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
+      temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
+      temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
+      temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
+    elif isinstance(self.kwargs['sep'], list) and all(isinstance(x, int) for x in self.kwargs['sep']):
+      temp_df = out_df[[key]].copy()
+      split_indices = list(zip([0] + self.kwargs['sep'], self.kwargs['sep'] + [None]))
+      for i, index in enumerate(split_indices):
+        if i == 0:
+          start = 0
+        else:
+          start = index[0]
+        stop = index[1]
+        if stop and start >= stop:
+          temp_df[str(i)] = ''
+        else:
+          temp_df[str(i)] = temp_df[key].str.slice(start=start, stop=stop)
+      temp_df = temp_df[[str(i) for i in range(len(self.kwargs['into']))]]
     else:
-      temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True)
-    temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(self.kwargs['sep'], n=n)))
-    temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
-    temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
-    temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
-    temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
+      raise ValueError("'sep' is not a string or numeric vector")
     temp_df.columns = self.kwargs['into']
     original_cols = out_df.columns.values.tolist()
     out_df.reset_index(inplace=True, drop=False)
