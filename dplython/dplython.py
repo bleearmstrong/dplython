@@ -930,6 +930,8 @@ class separate(Verb):
       temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
       temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
     elif isinstance(self.kwargs['sep'], list) and all(isinstance(x, int) for x in self.kwargs['sep']):
+      if len(self.kwargs['sep']) + 1 != len(self.kwargs['into']):
+          raise ValueError('All columns must be named')
       temp_df = out_df[[key]].copy()
       split_indices = list(zip([0] + self.kwargs['sep'], self.kwargs['sep'] + [None]))
       for i, index in enumerate(split_indices):

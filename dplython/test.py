@@ -1317,5 +1317,37 @@ class TestSeparate(unittest.TestCase):
 5,0.31,Good,MISSING,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_missing, true_missing)
 
+  def test_index(self):
+    input_df = load_diamonds() >> head(5)
+    df_index = input_df >> separate(X.cut, into=('split_1', 'split_2', 'split_3'), sep=[2, 4])
+    true_index = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,split_3,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,ea,l,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,em,ium,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Go,od,,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,em,ium,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Go,od,,J,SI2,63.3,58.0,335,4.34,4.35,2.75""")).fillna('')
+    npt.assert_array_equal(df_index, true_index)
+    df_index = input_df >> separate(X.cut, into=('split_1', 'split_2', 'split_3'), sep=[4, 2])
+    true_index = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,split_3,color,clarity,depth,table,price,x,y,z
+1,0.23,Idea,,eal,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Prem,,emium,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,,od,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Prem,,emium,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,,od,J,SI2,63.3,58.0,335,4.34,4.35,2.75""")).fillna('')
+    npt.assert_array_equal(df_index, true_index)
+    self.assertRaises(ValueError, separate, input_df, X.cut, into=('split_1', 'split_2'), sep=[4, 2])
+
+  def test_normal(self):
+    input_df = load_diamonds() >> head()
+    df_normal = separate(input_df, X.cut, into=('split_1', 'split_2'), sep=[2])
+    true_normal = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,eal,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,emium,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Go,od,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,emium,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Go,od,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_normal, true_normal)
+
+
 if __name__ == '__main__':
   unittest.main()
