@@ -847,10 +847,30 @@ class spread(Verb):
     return output_data
 
 
-
 class separate(Verb):
+  """Split a string column by regex or position into multiple columns
 
-  # TODO add documentation
+  >>> df >> separate(X.column, into=('col 1', 'col 2'), sep=' ', extra='warn', fill='warn', remove=True, missing=np.NAN)
+
+  (Column to be split and 'into' must be specified, others are defaults)
+  Column must be existing column
+  into: an iterable (list/tuple) of strings
+  sep: either a regex or a list (not tuple) of numerics that indicate split points;
+    if positions, length of sep should be 1 less than into
+  extra: (for regex sep option only)
+    if there are extra columns resulting from a split, this indicates how extras will be dealt with
+      warn: alert user and drop extra columns from right
+      right: drop columns from right
+      merge: perform at most (length of into) splits
+  fill: (for regex sep option only)
+    if there are not enough splits to fill the specified columns, this indicates how blanks will be dealth with
+      warn: alert user and fill from right
+      right: fill from right
+      left: fill from left
+  remove: if True, split column will be dropped; if False, new columns will be appended to end
+  missing: specify missing values; must be either np.NaN (default) or a string
+  """
+
   # TODO speed up left-fill
 
   __name__ = 'separate'
@@ -901,6 +921,10 @@ class separate(Verb):
       extra = self.kwargs['extra']
     else:
       extra = 'warn'
+    if 'sep' in self.kwargs:
+      sep = self.kwargs['sep']
+    else:
+      sep = ' '
     if 'remove' in self.kwargs:
       remove = self.kwargs['remove']
     else:
@@ -920,21 +944,21 @@ class separate(Verb):
     out_df = df.copy()
     if df._grouped_on:
       out_df = out_df >> ungroup()
-    if isinstance(self.kwargs['sep'], str):
+    if isinstance(sep, str):
       if extra == 'merge':
-        temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
+        temp_df = out_df[key].str.split(sep, expand=True, n=len(self.kwargs['into']) - 1)
       else:
-        temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True)
-      temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(self.kwargs['sep'], n=n)))
+        temp_df = out_df[key].str.split(sep, expand=True)
+      temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(sep, n=n)))
       temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
       temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
       temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
       temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
-    elif isinstance(self.kwargs['sep'], list) and all(isinstance(x, int) for x in self.kwargs['sep']):
-      if len(self.kwargs['sep']) + 1 != len(self.kwargs['into']):
+    elif isinstance(sep, list) and all(isinstance(x, int) for x in sep):
+      if len(sep) + 1 != len(self.kwargs['into']):
           raise ValueError('All columns must be named')
       temp_df = out_df[[key]].copy()
-      split_indices = list(zip([0] + self.kwargs['sep'], self.kwargs['sep'] + [None]))
+      split_indices = list(zip([0] + sep, sep + [None]))
       for i, index in enumerate(split_indices):
         if i == 0:
           start = 0
