@@ -83,7 +83,8 @@ class DplyFrame(DataFrame):
     handled_classes = (mutate, sift, summarize,
                        inner_join, full_join, left_join,
                        right_join, semi_join, anti_join, 
-                       head, nrow, gather, spread)
+                       head, nrow, gather, spread,
+                       separate)
     if isinstance(delayedFcn, handled_classes):
       return delayedFcn(self)
 
@@ -846,13 +847,11 @@ class spread(Verb):
     return output_data
 
 
+
 class separate(Verb):
 
   # TODO add documentation
   # TODO speed up left-fill
-  # TODO add split by index
-  # TODO fix grouping issue (?)
-
 
   __name__ = 'separate'
 
@@ -919,6 +918,8 @@ class separate(Verb):
     else:
       missing = np.nan
     out_df = df.copy()
+    if df._grouped_on:
+      out_df = out_df >> ungroup()
     if isinstance(self.kwargs['sep'], str):
       if extra == 'merge':
         temp_df = out_df[key].str.split(self.kwargs['sep'], expand=True, n=len(self.kwargs['into']) - 1)
@@ -961,4 +962,18 @@ class separate(Verb):
     if remove:
       out_columns = [a for b in [[y for y in self.kwargs['into']] if x == key else [x] for x in df.columns] for a in b]
       return_df = return_df[out_columns]
+    if df._grouped_on:
+      if key in df._grouped_on and remove:
+          temp_regroup = df._grouped_on.copy()
+          temp_regroup.remove(key)
+          if len(temp_regroup) == 0:
+            warnings.warn('Grouping variable removed from dataframe; returning ungrouped dataframe' , UserWarning)
+            return return_df
+          else:
+            warning_string = 'Grouping variable ' + str(key) + ' removed from dataframe; ' \
+                             + str(key) + ' removed from grouping variables'
+            warnings.warn(warning_string, UserWarning)
+            return_df.regroup(temp_regroup)
+            return return_df
+      return_df.regroup(df._grouped_on)
     return return_df

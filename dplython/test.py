@@ -1253,6 +1253,11 @@ class TestSeparate(unittest.TestCase):
 4,0.29,Premium,I,VS2,62.4,58.0,334,4.20,4.23,2.63,Pr,m,um
 5,0.31,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75,Good,NaN,NaN"""))
     npt.assert_array_equal(df_remove_false, true_remove_false)
+    df_remove_false_grouped = (input_df >>
+                                group_by(X.cut) >>
+                                separate(X.cut, into=('split_1', 'split_2', 'split_3'), sep='e|i', remove=False))
+    npt.assert_array_equal(df_remove_false_grouped, true_remove_false)
+    self.assertTrue(df_remove_false_grouped._grouped_on is not None)
 
   def test_extra(self):
     input_df = load_diamonds() >> head(5)
@@ -1279,6 +1284,49 @@ class TestSeparate(unittest.TestCase):
     npt.assert_array_equal(df_extra_warn, true_extra_drop_warn)
     npt.assert_array_equal(df_extra_drop, true_extra_drop_warn)
     npt.assert_array_equal(df_extra_merge, true_extra_merge)
+
+  def test_grouping(self):
+    input_df = load_diamonds() >> head(5)
+    with warnings.catch_warnings(record=True) as w:
+      warnings.simplefilter('always')
+      (input_df >>
+       group_by(X.cut) >>
+       separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=True))
+      # generates three warnings
+      self.assertTrue(len(w) == 3)
+    df_group_1 = (input_df >>
+                        group_by(X.cut) >>
+                        separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=True))
+    true_group_1 = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    df_group_2 = (input_df >>
+                        group_by(X.cut) >>
+                        separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=False))
+    true_group_2 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,split_1,split_2
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Id,al
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Pr,m
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,NaN
+4,0.29,Premium,I,VS2,62.4,58.0,334,4.20,4.23,2.63,Pr,m
+5,0.31,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75,Good,NaN"""))
+    df_group_3 = (input_df >>
+                        group_by(X.cut, X.color) >>
+                        separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=True))
+    true_group_3 = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
+    1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+    2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+    3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+    4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+    5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_group_1, true_group_1)
+    npt.assert_array_equal(df_group_2, true_group_2)
+    npt.assert_array_equal(df_group_3, true_group_3)
+    self.assertTrue(df_group_1._grouped_on is None)
+    self.assertTrue(df_group_2._grouped_on == ['cut'])
+    self.assertTrue(df_group_3._grouped_on == ['color'])
 
   def test_fill(self):
     input_df = load_diamonds() >> head(5)
