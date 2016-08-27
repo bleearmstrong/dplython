@@ -1246,12 +1246,12 @@ class TestSeparate(unittest.TestCase):
 4,0.29,Pr,m,um,I,VS2,62.4,58.0,334,4.20,4.23,2.63
 5,0.31,Good,NaN,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_remove_true, true_remove_true)
-    true_remove_false = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,split_1,split_2,split_3
-1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Id,al,NaN
-2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Pr,m,um
-3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,NaN,NaN
-4,0.29,Premium,I,VS2,62.4,58.0,334,4.20,4.23,2.63,Pr,m,um
-5,0.31,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75,Good,NaN,NaN"""))
+    true_remove_false = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,split_1,split_2,split_3,color,clarity,depth,table,price,x,y,z
+1,0.23,Ideal,Id,al,NaN,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Premium,Pr,m,um,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,Good,NaN,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Premium,Pr,m,um,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,Good,NaN,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_remove_false, true_remove_false)
     df_remove_false_grouped = (input_df >>
                                 group_by(X.cut) >>
@@ -1263,7 +1263,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in list(sys.modules.values()):
+      for mod in sys.modules.values():
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1293,7 +1293,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in list(sys.modules.values()):
+      for mod in sys.modules.values():
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1314,21 +1314,21 @@ class TestSeparate(unittest.TestCase):
     df_group_2 = (input_df >>
                         group_by(X.cut) >>
                         separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=False))
-    true_group_2 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,split_1,split_2
-1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Id,al
-2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Pr,m
-3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,NaN
-4,0.29,Premium,I,VS2,62.4,58.0,334,4.20,4.23,2.63,Pr,m
-5,0.31,Good,J,SI2,63.3,58.0,335,4.34,4.35,2.75,Good,NaN"""))
+    true_group_2 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,split_1,split_2,color,clarity,depth,table,price,x,y,z
+1,0.23,Ideal,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Premium,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Premium,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     df_group_3 = (input_df >>
                         group_by(X.cut, X.color) >>
                         separate(X.cut, into=('split_1', 'split_2'), sep='e|i', remove=True))
     true_group_3 = pd.read_csv(StringIO("""Unnamed: 0,carat,split_1,split_2,color,clarity,depth,table,price,x,y,z
-    1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
-    2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
-    3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
-    4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
-    5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+1,0.23,Id,al,E,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Pr,m,E,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,NaN,E,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Pr,m,I,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,NaN,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_group_1, true_group_1)
     npt.assert_array_equal(df_group_2, true_group_2)
     npt.assert_array_equal(df_group_3, true_group_3)
@@ -1340,7 +1340,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in list(sys.modules.values()):
+      for mod in sys.modules.values():
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
