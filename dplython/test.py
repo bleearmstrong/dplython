@@ -1262,6 +1262,10 @@ class TestSeparate(unittest.TestCase):
   def test_extra(self):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
+      # clear out existing warning log
+      for mod in sys.modules.values():
+        if hasattr(mod, '__warningregistry__'):
+          mod.__warningregistry__.clear()
       warnings.simplefilter('always')
       input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i')
       # generates two warnings
@@ -1288,6 +1292,10 @@ class TestSeparate(unittest.TestCase):
   def test_grouping(self):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
+      # clear out existing warning log
+      for mod in sys.modules.values():
+        if hasattr(mod, '__warningregistry__'):
+          mod.__warningregistry__.clear()
       warnings.simplefilter('always')
       (input_df >>
        group_by(X.cut) >>
@@ -1331,6 +1339,10 @@ class TestSeparate(unittest.TestCase):
   def test_fill(self):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
+      # clear out existing warning log
+      for mod in sys.modules.values():
+        if hasattr(mod, '__warningregistry__'):
+          mod.__warningregistry__.clear()
       warnings.simplefilter('always')
       input_df >> separate(X.cut, into=('split_1', 'split_2'), sep='e|i')
       # generates two warnings
