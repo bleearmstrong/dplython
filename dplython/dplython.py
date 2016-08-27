@@ -985,9 +985,14 @@ class separate(Verb):
       return_df.index.names = df.index.names
     else:
       return_df.index.names = [None for _ in df.index.names]
+    # reorder columns
+    key_index = return_df.columns.get_loc(key)
+    reordered_columns = list(return_df.columns[1:(key_index + 1)])
+    reordered_columns.extend(self.kwargs['into'])
+    reordered_columns.extend(return_df.columns[(key_index + 1):-len(self.kwargs['into'])])
+    return_df = return_df[reordered_columns]
     if remove:
-      out_columns = [a for b in [[y for y in self.kwargs['into']] if x == key else [x] for x in df.columns] for a in b]
-      return_df = return_df[out_columns]
+      del return_df[key]
     if df._grouped_on:
       if key in df._grouped_on and remove:
           temp_regroup = list(df._grouped_on)
