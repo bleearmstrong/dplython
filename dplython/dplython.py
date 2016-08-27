@@ -867,7 +867,8 @@ class separate(Verb):
       warn: alert user and fill from right
       right: fill from right
       left: fill from left
-  remove: if True, split column will be dropped; if False, new columns will be appended to end
+  remove: new columns will be placed next to split column
+      if True, split column will be dropped
   missing: specify missing values; must be either np.NaN (default) or a string
   """
 
@@ -889,7 +890,6 @@ class separate(Verb):
     keep_columns = list(range(into))
     keep_columns.extend([temp_df.shape[1] - 2, temp_df.shape[1] - 1])
     drop_columns = [x for x in range(temp_df.shape[1]) if x not in keep_columns]
-
     temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
     return temp_df
 
