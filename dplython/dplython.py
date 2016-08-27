@@ -917,6 +917,22 @@ class separate(Verb):
     else:
       return temp_df
 
+  @staticmethod
+  def temp_df_index(temp_df, key, into, sep):
+    split_indices = list(zip([0] + sep, sep + [None]))
+    for i, index in enumerate(split_indices):
+      if i == 0:
+        start = 0
+      else:
+        start = index[0]
+      stop = index[1]
+      if stop and start >= stop:
+        temp_df[str(i)] = ''
+      else:
+        temp_df[str(i)] = temp_df[key].str.slice(start=start, stop=stop)
+    temp_df = temp_df[[str(i) for i in range(len(into))]]
+    return temp_df
+
   def __call__(self, df):
     key = self.args[0]._name
     if 'extra' in self.kwargs:
@@ -960,18 +976,7 @@ class separate(Verb):
       if len(sep) + 1 != len(self.kwargs['into']):
           raise ValueError('All columns must be named')
       temp_df = out_df[[key]].copy()
-      split_indices = list(zip([0] + sep, sep + [None]))
-      for i, index in enumerate(split_indices):
-        if i == 0:
-          start = 0
-        else:
-          start = index[0]
-        stop = index[1]
-        if stop and start >= stop:
-          temp_df[str(i)] = ''
-        else:
-          temp_df[str(i)] = temp_df[key].str.slice(start=start, stop=stop)
-      temp_df = temp_df[[str(i) for i in range(len(self.kwargs['into']))]]
+      temp_df = separate.temp_df_index(temp_df, key, self.kwargs['into'], sep)
     else:
       raise ValueError("'sep' is not a string or numeric vector")
     temp_df.columns = self.kwargs['into']

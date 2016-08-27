@@ -1263,7 +1263,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1293,7 +1293,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1340,7 +1340,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1407,6 +1407,7 @@ class TestSeparate(unittest.TestCase):
 4,0.29,Pr,emium,I,VS2,62.4,58.0,334,4.20,4.23,2.63
 5,0.31,Go,od,J,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_normal, true_normal)
+
 
 
 if __name__ == '__main__':
