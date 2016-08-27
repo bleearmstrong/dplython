@@ -847,6 +847,7 @@ class spread(Verb):
     return output_data
 
 
+
 class separate(Verb):
   """Split a string column by regex or position into multiple columns
 
@@ -935,51 +936,37 @@ class separate(Verb):
 
   def __call__(self, df):
     key = self.args[0]._name
-    if 'extra' in self.kwargs:
-      extra = self.kwargs['extra']
-    else:
-      extra = 'warn'
-    if 'sep' in self.kwargs:
-      sep = self.kwargs['sep']
-    else:
-      sep = ' '
-    if 'remove' in self.kwargs:
-      remove = self.kwargs['remove']
-    else:
-      remove = True
-    if 'fill' in self.kwargs:
-      fill = self.kwargs['fill']
-    else:
-      fill = 'warn'
-    if 'n' in self.kwargs:
-      n = self.kwargs['n']
-    else:
-      n = len(self.kwargs['into'])
-    if 'missing' in self.kwargs:
-      missing = self.kwargs['missing']
-    else:
-      missing = np.nan
+    defaults = {'extra': 'warn', 'sep': ' ', 'remove': True, 'fill': 'warn', 'missing': np.NaN}
+    for def_key in defaults:
+      if def_key not in self.kwargs:
+        self.kwargs[def_key] = defaults[def_key]
+    extra = self.kwargs['extra']
+    sep = self.kwargs['sep']
+    remove = self.kwargs['remove']
+    fill = self.kwargs['fill']
+    missing = self.kwargs['missing']
+    into = self.kwargs['into']
     out_df = df.copy()
     if df._grouped_on:
       out_df = out_df >> ungroup()
     if isinstance(sep, str):
       if extra == 'merge':
-        temp_df = out_df[key].str.split(sep, expand=True, n=len(self.kwargs['into']) - 1)
+        temp_df = out_df[key].str.split(sep, expand=True, n=len(into) - 1)
       else:
         temp_df = out_df[key].str.split(sep, expand=True)
-      temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(sep, n=n)))
-      temp_df['temp_desired_lengths'] = len(self.kwargs['into'])
-      temp_df = separate.temp_df_extra(temp_df, extra, len(self.kwargs['into']))
-      temp_df = separate.temp_df_fill(temp_df, fill, missing, len(self.kwargs['into']))
+      temp_df['temp_split_lengths'] = list(map(len, out_df[key].str.split(sep, n=len(into))))
+      temp_df['temp_desired_lengths'] = len(into)
+      temp_df = separate.temp_df_extra(temp_df, extra, len(into))
+      temp_df = separate.temp_df_fill(temp_df, fill, missing, len(into))
       temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
     elif isinstance(sep, list) and all(isinstance(x, int) for x in sep):
-      if len(sep) + 1 != len(self.kwargs['into']):
+      if len(sep) + 1 != len(into):
           raise ValueError('All columns must be named')
       temp_df = out_df[[key]].copy()
-      temp_df = separate.temp_df_index(temp_df, key, self.kwargs['into'], sep)
+      temp_df = separate.temp_df_index(temp_df, key, into, sep)
     else:
       raise ValueError("'sep' is not a string or numeric vector")
-    temp_df.columns = self.kwargs['into']
+    temp_df.columns = into
     original_cols = out_df.columns.values.tolist()
     out_df.reset_index(inplace=True, drop=False)
     out_indices = [col for col in out_df.columns.values.tolist() if col not in original_cols]
@@ -993,8 +980,8 @@ class separate(Verb):
     # reorder columns
     key_index = return_df.columns.get_loc(key)
     reordered_columns = list(return_df.columns[:(key_index + 1)])
-    reordered_columns.extend(self.kwargs['into'])
-    reordered_columns.extend(return_df.columns[(key_index + 1):-len(self.kwargs['into'])])
+    reordered_columns.extend(into)
+    reordered_columns.extend(return_df.columns[(key_index + 1):-len(into)])
     return_df = return_df[reordered_columns]
     if remove:
       del return_df[key]
