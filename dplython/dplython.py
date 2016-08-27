@@ -960,6 +960,8 @@ class separate(Verb):
       temp_df = separate.temp_df_fill(temp_df, fill, missing, len(into))
       temp_df = temp_df.ix[:, 0:(temp_df.shape[1] - 2)]
     elif isinstance(sep, list) and all(isinstance(x, int) for x in sep):
+      if any((x < 0 for x in sep)):
+        raise ValueError('Split positions must be positive')
       if len(sep) + 1 != len(into):
           raise ValueError('All columns must be named')
       temp_df = out_df[[key]].copy()
