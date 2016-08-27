@@ -875,6 +875,7 @@ class separate(Verb):
 
   __name__ = 'separate'
 
+  @staticmethod
   def temp_df_extra(temp_df, extra, into):
     if temp_df.shape[1] - 2 <= into:
       return temp_df
@@ -892,13 +893,14 @@ class separate(Verb):
     temp_df.drop(temp_df.columns[drop_columns], axis=1, inplace=True)
     return temp_df
 
+  @staticmethod
   def left_fill(row, n_col):
     while row[n_col - 3] is None:
       row[1:(n_col - 1)] = list(row[0:(n_col - 2)])
       row[0] = None
     return row
 
-
+  @staticmethod
   def temp_df_fill(temp_df, fill, missing, into):
     if any(temp_df.temp_split_lengths < temp_df.temp_desired_lengths):
       if fill == 'warn':
@@ -977,7 +979,7 @@ class separate(Verb):
     out_df.reset_index(inplace=True, drop=False)
     out_indices = [col for col in out_df.columns.values.tolist() if col not in original_cols]
     temp_df.reset_index(inplace=True, drop=True)
-    return_df = pd.concat([out_df, temp_df], axis=1)
+    return_df = pandas.concat([out_df, temp_df], axis=1)
     return_df.set_index(out_indices, inplace=True)
     if df.index.names:
       return_df.index.names = df.index.names
@@ -988,7 +990,7 @@ class separate(Verb):
       return_df = return_df[out_columns]
     if df._grouped_on:
       if key in df._grouped_on and remove:
-          temp_regroup = df._grouped_on.copy()
+          temp_regroup = list(df._grouped_on)
           temp_regroup.remove(key)
           if len(temp_regroup) == 0:
             warnings.warn('Grouping variable removed from dataframe; returning ungrouped dataframe' , UserWarning)

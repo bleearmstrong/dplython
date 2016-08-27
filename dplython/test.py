@@ -1263,7 +1263,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1293,7 +1293,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
@@ -1340,7 +1340,7 @@ class TestSeparate(unittest.TestCase):
     input_df = load_diamonds() >> head(5)
     with warnings.catch_warnings(record=True) as w:
       # clear out existing warning log
-      for mod in sys.modules.values():
+      for mod in list(sys.modules.values()):
         if hasattr(mod, '__warningregistry__'):
           mod.__warningregistry__.clear()
       warnings.simplefilter('always')
