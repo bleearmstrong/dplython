@@ -83,7 +83,8 @@ class DplyFrame(DataFrame):
     handled_classes = (mutate, sift, summarize,
                        inner_join, full_join, left_join,
                        right_join, semi_join, anti_join, 
-                       head, nrow, gather, spread)
+                       head, nrow, gather, spread,
+                       unite)
     if isinstance(delayedFcn, handled_classes):
       return delayedFcn(self)
 
@@ -845,12 +846,13 @@ class spread(Verb):
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
 
+
 class unite(Verb):
 
   __name__ = 'unite'
 
   def __call__(self, df):
-    out_df = df.copy()
+    out_df = df.copy() >> ungroup()
     new_col = self.kwargs['into']
     from_columns = self.kwargs['cols']
     if 'remove' not in self.kwargs:
@@ -871,5 +873,16 @@ class unite(Verb):
     reorder.extend(range(insert_point, out_df.shape[1] - 1))
     out_df = out_df[reorder]
     if remove:
+      if df._grouped_on:
+        grouped_columns = df._grouped_on
+        dropped_columns =[column._name for column in from_columns]
+        regroup_columns = [column for column in grouped_columns if column not in dropped_columns]
+        dropped_grouping_columns = [column for column in dropped_columns if column in grouped_columns]
+        if len(regroup_columns) == 0:
+          warnings.warn('Grouping variable(s) removed from dataframe; returning ungrouped dataframe', UserWarning)
+        elif len(dropped_grouping_columns) > 0:
+          warning_string = 'Grouping variable(s) ' + str(dropped_grouping_columns)[1:-1] + ' removed from grouping variables'
+          warnings.warn(warning_string, UserWarning)
+          out_df.regroup(regroup_columns)
       out_df = out_df.drop([x._name for x in from_columns], axis=1)
     return out_df
