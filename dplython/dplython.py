@@ -844,3 +844,32 @@ class spread(Verb):
     old_data = out_df[spread_index_columns].drop_duplicates()
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
+
+class unite(Verb):
+
+  __name__ = 'unite'
+
+  def __call__(self, df):
+    out_df = df.copy()
+    new_col = self.kwargs['into']
+    from_columns = self.kwargs['cols']
+    if 'remove' not in self.kwargs:
+      remove = True
+    else:
+      remove = False
+    if 'sep' not in self.kwargs:
+      sep = '_'
+    else:
+      sep = self.kwargs['sep']
+    out_df[new_col] = out_df[from_columns[0]._name].map(str)
+    # could be slow here, test
+    for column in from_columns[1:]:
+      out_df[new_col] = out_df[new_col] + sep + out_df[column._name].map(str)
+    insert_point = out_df.columns.get_loc(from_columns[0]._name)
+    reorder = list(range(0, insert_point))
+    reorder.extend([out_df.shape[1] - 1])
+    reorder.extend(range(insert_point, out_df.shape[1] - 1))
+    out_df = out_df[reorder]
+    if remove:
+      out_df = out_df.drop([x._name for x in from_columns], axis=1)
+    return out_df
