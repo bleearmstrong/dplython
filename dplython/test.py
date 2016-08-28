@@ -1234,5 +1234,44 @@ China,2000,213766,1280428583""")))
     self.assertRaises(ValueError, spread, input_df, X.key, X.value)
 
 
+class TestUnite(unittest.TestCase):
+  def test_unite(self):
+    input_df = load_diamonds() >> head(5)
+    df_unite_1 = input_df >> unite(into='into_1', cols=[X.clarity, X.price])
+    df_unite_2 = input_df >> unite(into='into_1', cols=[X.clarity, X.price], remove=False)
+    df_unite_3 = input_df >> unite(into='into_1', cols=[X.clarity, X.price], sep='*')
+    true_unite_1 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,into_1,depth,table,x,y,z
+1,0.23,Ideal,E,SI2_326,61.5,55.0,3.95,3.98,2.43
+2,0.21,Premium,E,SI1_326,59.8,61.0,3.89,3.84,2.31
+3,0.23,Good,E,VS1_327,56.9,65.0,4.05,4.07,2.31
+4,0.29,Premium,I,VS2_334,62.4,58.0,4.20,4.23,2.63
+5,0.31,Good,J,SI2_335,63.3,58.0,4.34,4.35,2.75"""))
+    true_unite_2 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,into_1,clarity,depth,table,price,x,y,z
+1,0.23,Ideal,E,SI2_326,SI2,61.5,55.0,326,3.95,3.98,2.43
+2,0.21,Premium,E,SI1_326,SI1,59.8,61.0,326,3.89,3.84,2.31
+3,0.23,Good,E,VS1_327,VS1,56.9,65.0,327,4.05,4.07,2.31
+4,0.29,Premium,I,VS2_334,VS2,62.4,58.0,334,4.20,4.23,2.63
+5,0.31,Good,J,SI2_335,SI2,63.3,58.0,335,4.34,4.35,2.75"""))
+    true_unite_3 = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,into_1,depth,table,x,y,z
+1,0.23,Ideal,E,SI2*326,61.5,55.0,3.95,3.98,2.43
+2,0.21,Premium,E,SI1*326,59.8,61.0,3.89,3.84,2.31
+3,0.23,Good,E,VS1*327,56.9,65.0,4.05,4.07,2.31
+4,0.29,Premium,I,VS2*334,62.4,58.0,4.20,4.23,2.63
+5,0.31,Good,J,SI2*335,63.3,58.0,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_unite_1, true_unite_1)
+    npt.assert_array_equal(df_unite_2, true_unite_2)
+    npt.assert_array_equal(df_unite_3, true_unite_3)
+
+  def test_unite_normal(self):
+    input_df = load_diamonds() >> head(5)
+    df_unite_normal = unite(input_df, into='into_1', cols=[X.clarity, X.price])
+    true_unite_normal = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,into_1,depth,table,x,y,z
+1,0.23,Ideal,E,SI2_326,61.5,55.0,3.95,3.98,2.43
+2,0.21,Premium,E,SI1_326,59.8,61.0,3.89,3.84,2.31
+3,0.23,Good,E,VS1_327,56.9,65.0,4.05,4.07,2.31
+4,0.29,Premium,I,VS2_334,62.4,58.0,4.20,4.23,2.63
+5,0.31,Good,J,SI2_335,63.3,58.0,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_unite_normal, true_unite_normal)
+
 if __name__ == '__main__':
   unittest.main()
