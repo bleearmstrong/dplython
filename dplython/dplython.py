@@ -851,8 +851,11 @@ class separate_rows(Verb):
   __name__ = 'separate_rows'
 
   def __call__(self, df):
+    if 'sep' not in self.kwargs:
+        sep = ','
+    else:
+        sep = self.kwargs['sep']
     separate_columns = [x._name for x in self.args[0]]
-    sep = ' '
     out_df = df.copy()
     out_df.reset_index(drop=False, inplace=True)
     original_columns = df.columns.values.tolist()
