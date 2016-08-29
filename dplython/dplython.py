@@ -869,7 +869,7 @@ class separate_rows(Verb):
     lengths = list(map(len, expanded))
     if min(lengths) != max(lengths):
       raise ValueError('Nested columns must contain the same number of elements pairwise')
-    join_df = pd.concat(expanded, axis=1)
+    join_df = pandas.concat(expanded, axis=1)
     out_df.drop(separate_columns, axis=1, inplace=True)
     out_df = out_df.join(join_df)
     out_df.set_index(index_columns, inplace=True)
