@@ -852,7 +852,6 @@ class separate_rows(Verb):
 
   def __call__(self, df):
     separate_columns = [x._name for x in self.args[0]]
-    print(separate_columns)
     sep = ' '
     out_df = df.copy()
     out_df.reset_index(drop=False, inplace=True)
@@ -870,5 +869,10 @@ class separate_rows(Verb):
     join_df = pd.concat(expanded, axis=1)
     out_df.drop(separate_columns, axis=1, inplace=True)
     out_df = out_df.join(join_df)
+    out_df.set_index(index_columns, inplace=True)
+    if df.index.names:
+      out_df.index.names = df.index.names
+    else:
+      out_df.index.names = [None for _ in df.index.names]
     out_df = out_df[original_columns]
     return out_df
