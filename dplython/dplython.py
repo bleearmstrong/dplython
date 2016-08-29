@@ -862,8 +862,14 @@ class separate_rows(Verb):
     index_columns = [x for x in out_df.columns if x not in original_columns]
     expanded = []
     for col in separate_columns:
-      loop_df = out_df[col].str.split(sep).apply(pd.Series, 1).stack()
-      loop_df.index = loop_df.index.droplevel(-1)
+      loop_df = (
+        out_df[col]
+        .str
+        .split(sep, expand=True)
+        .stack()
+        .reset_index(drop=True, level=1)
+        .rename(col)
+      )
       loop_df.name = col
       expanded.append(loop_df.copy())
     lengths = list(map(len, expanded))
