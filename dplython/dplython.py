@@ -848,7 +848,7 @@ class spread(Verb):
 
 
 class unite(Verb):
-    """Combine multiple columns into a single column (complement of 'separate')
+  """Combine multiple columns into a single column (complement of 'separate')
     >>> df >> unite(into='new_column', cols=[X.column_1, X.column_2], sep='_', remove=True)
 
     into and cols must be specified
@@ -870,7 +870,7 @@ Out[0]:
 
     Grouping will be preserved as much as possible; if any of the grouping variables are removed, they will be
     removed from the grouping as well, but dataframe will still be grouped by unaffected variables
-    """
+  """
 
   __name__ = 'unite'
 
