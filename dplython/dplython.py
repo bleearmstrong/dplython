@@ -848,6 +848,29 @@ class spread(Verb):
 
 
 class unite(Verb):
+    """Combine multiple columns into a single column (complement of 'separate')
+    >>> df >> unite(into='new_column', cols=[X.column_1, X.column_2], sep='_', remove=True)
+
+    into and cols must be specified
+    into is the name of the new column; result will be a character column
+    cols is a list of columns that will be combined
+    sep is the delimiter used to join the columns
+    remove indicates whether or not the original columns will be kept
+
+    example usage:
+In[0]: diamonds >> head(5) >> unite(into='clarity_price', cols=[X.clarity, X.price])
+
+Out[0]:
+   Unnamed: 0  carat      cut color clarity_price  depth  table     x     y     z
+0           1   0.23    Ideal     E       SI2_326   61.5   55.0  3.95  3.98  2.43
+1           2   0.21  Premium     E       SI1_326   59.8   61.0  3.89  3.84  2.31
+2           3   0.23     Good     E       VS1_327   56.9   65.0  4.05  4.07  2.31
+3           4   0.29  Premium     I       VS2_334   62.4   58.0  4.20  4.23  2.63
+4           5   0.31     Good     J       SI2_335   63.3   58.0  4.34  4.35  2.75
+
+    Grouping will be preserved as much as possible; if any of the grouping variables are removed, they will be
+    removed from the grouping as well, but dataframe will still be grouped by unaffected variables
+    """
 
   __name__ = 'unite'
 
