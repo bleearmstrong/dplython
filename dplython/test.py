@@ -1235,6 +1235,7 @@ China,2000,213766,1280428583""")))
 
 
 class TestUnite(unittest.TestCase):
+
   def test_unite(self):
     input_df = load_diamonds() >> head(5)
     df_unite_1 = input_df >> unite(into='into_1', cols=[X.clarity, X.price])
@@ -1272,6 +1273,31 @@ class TestUnite(unittest.TestCase):
 4,0.29,Premium,I,VS2_334,62.4,58.0,4.20,4.23,2.63
 5,0.31,Good,J,SI2_335,63.3,58.0,4.34,4.35,2.75"""))
     npt.assert_array_equal(df_unite_normal, true_unite_normal)
+
+  def test_unite_group(self):
+    input_df = load_diamonds() >> head(5)
+    with warnings.catch_warnings(record=True) as w:
+      # clear out existing warning log
+      for mod in list(sys.modules.values()):
+        if hasattr(mod, '__warningregistry__'):
+          mod.__warningregistry__.clear()
+      warnings.simplefilter('always')
+      input_df >> group_by(X.cut) >> unite(into='into_1', cols=[X.price, X.cut])
+      # generates 1 warning
+      self.assertTrue(len(w) == 1)
+    df_unite_group_1 = input_df >> group_by(X.cut, X.x) >> unite(into='into_1', cols=[X.clarity, X.price, X.cut])
+    df_unite_group_2 = input_df >> group_by(X.cut) >> unite(into='into_1', cols=[X.clarity, X.price, X.cut])
+    true_unite_group = pd.read_csv(StringIO("""Unnamed: 0,carat,color,into_1,depth,table,x,y,z
+1,0.23,E,SI2_326_Ideal,61.5,55.0,3.95,3.98,2.43
+2,0.21,E,SI1_326_Premium,59.8,61.0,3.89,3.84,2.31
+3,0.23,E,VS1_327_Good,56.9,65.0,4.05,4.07,2.31
+4,0.29,I,VS2_334_Premium,62.4,58.0,4.20,4.23,2.63
+5,0.31,J,SI2_335_Good,63.3,58.0,4.34,4.35,2.75"""))
+    npt.assert_array_equal(df_unite_group_1, true_unite_group)
+    npt.assert_array_equal(df_unite_group_2, true_unite_group)
+    self.assertTrue(df_unite_group_1._grouped_on == ['x'])
+    self.assertTrue(df_unite_group_2._grouped_on is None)
+
 
 if __name__ == '__main__':
   unittest.main()
