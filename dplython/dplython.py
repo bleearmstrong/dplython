@@ -844,3 +844,31 @@ class spread(Verb):
     old_data = out_df[spread_index_columns].drop_duplicates()
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
+
+
+class separate_rows(Verb):
+
+  __name__ = 'separate_rows'
+
+  def __call__(self, df):
+    separate_columns = [x._name for x in self.args[0]]
+    print(separate_columns)
+    sep = ' '
+    out_df = df.copy()
+    out_df.reset_index(drop=False, inplace=True)
+    original_columns = df.columns.values.tolist()
+    index_columns = [x for x in out_df.columns if x not in original_columns]
+    expanded = []
+    for col in separate_columns:
+      loop_df = out_df[col].str.split(sep).apply(pd.Series, 1).stack()
+      loop_df.index = loop_df.index.droplevel(-1)
+      loop_df.name = col
+      expanded.append(loop_df.copy())
+    lengths = list(map(len, expanded))
+    if min(lengths) != max(lengths):
+      raise ValueError('Nested columns must contain the same number of elements pairwise')
+    join_df = pd.concat(expanded, axis=1)
+    out_df.drop(separate_columns, axis=1, inplace=True)
+    out_df = out_df.join(join_df)
+    out_df = out_df[original_columns]
+    return out_df
