@@ -859,7 +859,12 @@ class separate_rows(Verb):
       strip = False
     else:
       strip = self.kwargs['strip']
-    separate_columns = [x._name for x in self.args[0]]
+    if isinstance(self.args[0], list) and all((isinstance(x, Later) for x in self.args[0])):
+        separate_columns = [x._name for x in self.args[0]]
+    elif isinstance(self.args[0], Later):
+        separate_columns = [self.args[0]._name]
+    else:
+        raise ValueError('Input column(s) misspecified')
     out_df = df.copy()
     out_df.reset_index(drop=False, inplace=True)
     original_columns = df.columns.values.tolist()

@@ -1234,7 +1234,6 @@ China,2000,213766,1280428583""")))
     self.assertRaises(ValueError, spread, input_df, X.key, X.value)
 
 
-
 class TestSeparateRows(unittest.TestCase):
 
   def test_one_column(self):
@@ -1295,6 +1294,8 @@ class TestSeparateRows(unittest.TestCase):
 2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
 3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good
 3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good"""))
+    npt.assert_array_equal(df_separate_row, true_separate_rows)
+    df_separate_row = separate_rows(input_df, X.test)
     npt.assert_array_equal(df_separate_row, true_separate_rows)
 
 
