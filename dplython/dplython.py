@@ -852,9 +852,13 @@ class separate_rows(Verb):
 
   def __call__(self, df):
     if 'sep' not in self.kwargs:
-        sep = ','
+      sep = ','
     else:
-        sep = self.kwargs['sep']
+      sep = self.kwargs['sep']
+    if 'strip' not in self.kwargs:
+      strip = False
+    else:
+      strip = self.kwargs['strip']
     separate_columns = [x._name for x in self.args[0]]
     out_df = df.copy()
     out_df.reset_index(drop=False, inplace=True)
@@ -871,6 +875,8 @@ class separate_rows(Verb):
         .rename(col)
       )
       loop_df.name = col
+      if strip:
+        loop_df = getattr(loop_df.str, strip)()
       expanded.append(loop_df.copy())
     lengths = list(map(len, expanded))
     if min(lengths) != max(lengths):
