@@ -1234,5 +1234,69 @@ China,2000,213766,1280428583""")))
     self.assertRaises(ValueError, spread, input_df, X.key, X.value)
 
 
+
+class TestSeparateRows(unittest.TestCase):
+
+  def test_one_column(self):
+    input_df = load_diamonds() >> head(3)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    df_separate_rows_1 = input_df >> separate_rows([X.test])
+    input_df = load_diamonds() >> head(3)
+    input_df = input_df >> mutate(test=X.cut + '*' + X.cut)
+    df_separate_rows_2 = input_df >> separate_rows([X.test], sep='*')
+    true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good"""))
+    npt.assert_array_equal(df_separate_rows_1, true_separate_rows)
+    npt.assert_array_equal(df_separate_rows_2, true_separate_rows)
+    input_df = load_diamonds() >> head(3)
+    input_df_0 = input_df >> mutate(test=X.cut + ' , ' + X.cut)
+    test_0 = input_df_0 >> separate_rows([X.test], strip='lstrip')
+    test_0_list = list(map(len, test_0.test))
+    test_1 = input_df_0 >> separate_rows([X.test], strip='rstrip')
+    test_1_list = list(map(len, test_1.test))
+    test_2 = input_df_0 >> separate_rows([X.test], strip='strip')
+    test_2_list = list(map(len, test_2.test))
+    test_3 = input_df_0 >> separate_rows([X.test])
+    test_3_list = list(map(len, test_3.test))
+    self.assertTrue(test_0_list == [6, 5, 8, 7, 5, 4])
+    self.assertTrue(test_1_list == [5, 6, 7, 8, 4, 5])
+    self.assertTrue(test_2_list == [5, 5, 7, 7, 4, 4])
+    self.assertTrue(test_3_list == [6, 6, 8, 8, 5, 5])
+
+  def test_two_columns(self):
+    input_df = load_diamonds() >> head(3)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    input_df = input_df >> mutate(test_2=X.cut + ',' + X.cut)
+    df_separate_rows = input_df >> separate_rows([X.test, X.test_2])
+    true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test,test_2
+,1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal,Ideal
+,1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal,Ideal
+,2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium,Premium
+,2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium,Premium
+,3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,Good
+,3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good,Good"""))
+    npt.assert_array_equal(df_separate_rows, true_separate_rows)
+    input_df.test_2[0] = 'a'
+    self.assertRaises(ValueError, separate_rows, input_df, [X.test, X.test_2])
+
+  def test_normal(self):
+    input_df = load_diamonds() >> head(3)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    df_separate_row = separate_rows(input_df, [X.test])
+    true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good"""))
+    npt.assert_array_equal(df_separate_row, true_separate_rows)
+
+
 if __name__ == '__main__':
   unittest.main()
