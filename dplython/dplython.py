@@ -848,6 +848,34 @@ class spread(Verb):
 
 
 class separate_rows(Verb):
+  """Spread a dataframe by splitting one or more columns into multiple rows when a delimiter separates values
+  >>> df >> separate_rows(X.column, sep=',', strip=False)
+  Example usage:
+
+In[0]: df
+
+Out[0]:
+   a  b    c
+0  0  1  a,b
+1  2  3  b,c
+
+In[1]: df >> separate_rows(X.c)
+
+Out[1]:
+   a  b  c
+0  0  1  a
+0  0  1  b
+1  2  3  b
+1  2  3  c
+
+  input:
+  A single column or list of multiple columns to separate; if multiple columns, columns must agree pairwise with output
+    from delimiters. For example, if columns A and B are to be split, then if A has two delimiters, then B must have
+    two delimiters
+  sep is an optional delimiter to split on (default ',')
+  strip indicates whether or not to strip after separating (default no stripping (False), options are
+    left strip (lstrip), right strip (rstrip), and full strip (strip)
+  """
 
   __name__ = 'separate_rows'
 
