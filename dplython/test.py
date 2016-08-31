@@ -1238,10 +1238,10 @@ class TestSeparateRows(unittest.TestCase):
 
   def test_one_column(self):
     input_df = load_diamonds() >> head(3)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
     df_separate_rows_1 = input_df >> separate_rows([X.test])
     input_df = load_diamonds() >> head(3)
-    input_df = input_df >> mutate(test=X.cut + '*' + X.cut)
+    input_df['test'] = input_df['cut'] + '*' + input_df['cut']
     df_separate_rows_2 = input_df >> separate_rows([X.test], sep='*')
     true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
 1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
@@ -1253,7 +1253,8 @@ class TestSeparateRows(unittest.TestCase):
     npt.assert_array_equal(df_separate_rows_1, true_separate_rows)
     npt.assert_array_equal(df_separate_rows_2, true_separate_rows)
     input_df = load_diamonds() >> head(3)
-    input_df_0 = input_df >> mutate(test=X.cut + ' , ' + X.cut)
+    input_df_0 = input_df.copy()
+    input_df_0['test'] = input_df['cut'] + ' , ' + input_df['cut']
     test_0 = input_df_0 >> separate_rows([X.test], strip='lstrip')
     test_0_list = list(map(len, test_0.test))
     test_1 = input_df_0 >> separate_rows([X.test], strip='rstrip')
@@ -1269,8 +1270,8 @@ class TestSeparateRows(unittest.TestCase):
 
   def test_two_columns(self):
     input_df = load_diamonds() >> head(3)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
-    input_df = input_df >> mutate(test_2=X.cut + ',' + X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
+    input_df['test_2'] = input_df['cut'] + ',' + input_df['cut']
     df_separate_rows = input_df >> separate_rows([X.test, X.test_2])
     true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test,test_2
 ,1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal,Ideal
@@ -1285,7 +1286,7 @@ class TestSeparateRows(unittest.TestCase):
 
   def test_normal(self):
     input_df = load_diamonds() >> head(3)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
     df_separate_row = separate_rows(input_df, [X.test])
     true_separate_rows = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
 1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
@@ -1300,7 +1301,8 @@ class TestSeparateRows(unittest.TestCase):
 
   def test_grouping(self):
     input_df = load_diamonds() >> head(3)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut) >> group_by(X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
+    input_df = input_df >> group_by(X.cut)
     df_test_group = input_df >> separate_rows(X.test)
     self.assertTrue(df_test_group._grouped_on == ['cut'])
     true_test_group = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
@@ -1316,18 +1318,19 @@ class TestSeparateRows(unittest.TestCase):
     # set single index
     input_df = load_diamonds() >> head(3)
     input_df.set_index('Unnamed: 0', inplace=True)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
     df_index_1 = input_df >> separate_rows(X.test)
     self.assertTrue(df_index_1.index.tolist() == [1, 1, 2, 2, 3, 3])
     self.assertTrue(df_index_1.index.name == 'Unnamed: 0')
     # test multi-index
     input_df = load_diamonds() >> head(3)
     input_df.set_index(['color', 'Unnamed: 0'], inplace=True)
-    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    input_df['test'] = input_df['cut'] + ',' + input_df['cut']
     df_index_2 = input_df >> separate_rows(X.test)
     iterables = [['E'], [1, 1, 2, 2, 3, 3]]
     true_index = pd.MultiIndex.from_product(iterables, names=['color', 'Unnnamed: 0'])
-    self.assertTrue(df_index_2.index == true_index)
+    # self.assertTrue(df_index_2.index == true_index)
+    self.assertTrue(df_index_2.index.equals(true_index))
 
 
 if __name__ == '__main__':
