@@ -83,7 +83,8 @@ class DplyFrame(DataFrame):
     handled_classes = (mutate, sift, summarize,
                        inner_join, full_join, left_join,
                        right_join, semi_join, anti_join, 
-                       head, nrow, gather, spread)
+                       head, nrow, gather, spread,
+                       separate_rows)
     if isinstance(delayedFcn, handled_classes):
       return delayedFcn(self)
 
@@ -895,4 +896,6 @@ class separate_rows(Verb):
     else:
       out_df.index.names = [None for _ in df.index.names]
     out_df = out_df[original_columns]
+    if df._grouped_on:
+      out_df = out_df.regroup(df._grouped_on)
     return out_df

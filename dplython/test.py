@@ -1298,6 +1298,20 @@ class TestSeparateRows(unittest.TestCase):
     df_separate_row = separate_rows(input_df, X.test)
     npt.assert_array_equal(df_separate_row, true_separate_rows)
 
+  def test_grouping(self):
+    input_df = load_diamonds() >> head(3)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut) >> group_by(X.cut)
+    df_test_group = input_df >> separate_rows(X.test)
+    self.assertTrue(df_test_group._grouped_on == ['cut'])
+    true_test_group = pd.read_csv(StringIO("""Unnamed: 0,carat,cut,color,clarity,depth,table,price,x,y,z,test
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+1,0.23,Ideal,E,SI2,61.5,55.0,326,3.95,3.98,2.43,Ideal
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+2,0.21,Premium,E,SI1,59.8,61.0,326,3.89,3.84,2.31,Premium
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good
+3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good"""))
+    npt.assert_array_equal(df_test_group, true_test_group)
+
 
 if __name__ == '__main__':
   unittest.main()
