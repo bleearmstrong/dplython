@@ -1312,6 +1312,23 @@ class TestSeparateRows(unittest.TestCase):
 3,0.23,Good,E,VS1,56.9,65.0,327,4.05,4.07,2.31,Good"""))
     npt.assert_array_equal(df_test_group, true_test_group)
 
+  def test_index_preservation(self):
+    # set single index
+    input_df = load_diamonds() >> head(3)
+    input_df.set_index('Unnamed: 0', inplace=True)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    df_index_1 = input_df >> separate_rows(X.test)
+    self.assertTrue(df_index_1.index.tolist() == [1, 1, 2, 2, 3, 3])
+    self.assertTrue(df_index_1.index.name == 'Unnamed: 0')
+    # test multi-index
+    input_df = load_diamonds() >> head(3)
+    input_df.set_index(['color', 'Unnamed: 0'], inplace=True)
+    input_df = input_df >> mutate(test=X.cut + ',' + X.cut)
+    df_index_2 = input_df >> separate_rows(X.test)
+    iterables = [['E'], [1, 1, 2, 2, 3, 3]]
+    true_index = pd.MultiIndex.from_product(iterables, names=['color', 'Unnnamed: 0'])
+    self.assertTrue(df_index_2.index == true_index)
+
 
 if __name__ == '__main__':
   unittest.main()
