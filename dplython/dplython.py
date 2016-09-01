@@ -199,8 +199,7 @@ def dfilter(*args, **kwargs):
   return sift(*args, **kwargs)
 
 
-@ApplyToDataframe
-def select(*args):
+class select(Verb):
   """Select specific columns from DataFrame. 
 
   Output will be DplyFrame type. Order of columns will be the same as input into
@@ -222,6 +221,8 @@ def select(*args):
   >>> df >> group_by(X.a, X.b) >> select(X.c, X.b)
   returns a dataframe like `df[[X.a, X.c, X.b]]`
   """
+
+  @staticmethod
   def select_columns(df, args):
     columns = [column._name for column in args]
     if df._grouped_on:
@@ -229,7 +230,9 @@ def select(*args):
         if col not in columns:
           columns.insert(0, col)
     return columns
-  return lambda df: df[select_columns(df, args)]
+
+  def __call__(self, df):
+    return df[select.select_columns(df, self.args)]
 
 
 def _dict_to_possibly_ordered_tuples(dict_):
