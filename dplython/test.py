@@ -1198,6 +1198,28 @@ class TestSpread(unittest.TestCase):
     spread_test_df = spread(input_df, X.var, X.value)
     self.assertTrue(spread_test_df.equals(input_pd))
 
+  def test_spread_1_convert(self):
+    input_df = DplyFrame(pd.read_csv(StringIO("""row,var,value
+1,Sepal.Length,5.1
+1,Species,setosa
+1,Species_num,1
+51,Sepal.Length,7.0
+51,Species,versicolor
+51,Species_num,2""")))
+    input_pd = DplyFrame(pd.read_csv(StringIO("""row,Sepal.Length,Species,Species_num
+1,5.1,setosa,1
+51,7.0,versicolor,2
+""")))
+    spread_test_df = input_df >> spread(X.var, X.value, convert_numeric=True)
+    # test 1
+    # must change datatype so that dataframe compare equal
+    # input_pd['Sepal.Length'] = input_pd['Sepal.Length'].astype(str)
+    # input_pd['Species_num'] = input_pd['Species_num'].astype(str)
+    self.assertTrue(spread_test_df.equals(input_pd))
+    # test normal form
+    spread_test_df = spread(input_df, X.var, X.value, convert_numeric=True)
+    self.assertTrue(spread_test_df.equals(input_pd))
+
   def test_spread_2(self):
     input_df = DplyFrame(pd.read_csv(StringIO("""country,year,key,value
 1,Afghanistan,1999,cases,745
