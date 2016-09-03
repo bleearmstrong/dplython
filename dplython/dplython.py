@@ -841,6 +841,10 @@ class spread(Verb):
     if not all(new_spread_data.groupby([new_spread_data.index, key._name]).agg('count').reset_index()[values._name] < 2):
       raise ValueError('Duplicate identifers')
     new_data = new_spread_data.pivot(columns=key._name, values=values._name)
+    if ('convert_numeric' in self.kwargs
+        and self.kwargs['convert_numeric']
+        and out_df[values._name].dtype.kind in 'OSaU'):
+      new_data = new_data.apply(lambda x: pd.to_numeric(x, errors='ignore'))
     old_data = out_df[spread_index_columns].drop_duplicates()
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
