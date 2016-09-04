@@ -872,12 +872,12 @@ def convert_type(df, columns):
       type_dic[col] = 'boolean'
       continue
     # check numeric:
-    test_numeric = pd.to_numeric(temp_col, errors='coerce')
+    test_numeric = pandas.to_numeric(temp_col, errors='coerce')
     if test_numeric.isnull().sum() == 0:
       type_dic[col] = 'numeric'
       continue
     # check datetime:
-    test_datetime = pd.to_datetime(temp_col, errors='coerce')
+    test_datetime = pandas.to_datetime(temp_col, errors='coerce')
     if test_datetime.isnull().sum() == 0:
       type_dic[col] = 'datetime'
       continue
@@ -886,7 +886,7 @@ def convert_type(df, columns):
     if type_dic[col] == 'boolean':
       out_df[col] = out_df[col].map(d)
     if type_dic[col] == 'numeric':
-      out_df[col] = pd.to_numeric(out_df[col], errors='ignore')
+      out_df[col] = pandas.to_numeric(out_df[col], errors='ignore')
     if type_dic[col] == 'datetime':
-      out_df[col] = pd.to_datetime(out_df[col], errors='ignore', infer_datetime_format=True)
+      out_df[col] = pandas.to_datetime(out_df[col], errors='ignore', infer_datetime_format=True)
   return out_df
