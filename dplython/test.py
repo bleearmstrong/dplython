@@ -1198,6 +1198,25 @@ class TestSpread(unittest.TestCase):
     spread_test_df = spread(input_df, X.var, X.value)
     self.assertTrue(spread_test_df.equals(input_pd))
 
+  def test_spread_1_convert(self):
+    input_df = DplyFrame(pd.read_csv(StringIO("""row,var,value
+1,Sepal.Length,5.1
+1,Species,setosa
+1,Species_num,1
+51,Sepal.Length,7.0
+51,Species,versicolor
+51,Species_num,2""")))
+    input_pd = DplyFrame(pd.read_csv(StringIO("""row,Sepal.Length,Species,Species_num
+1,5.1,setosa,1
+51,7.0,versicolor,2
+""")))
+    spread_test_df = input_df >> spread(X.var, X.value, convert_type=True)
+    # test 1
+    self.assertTrue(spread_test_df.equals(input_pd))
+    # test normal form
+    spread_test_df = spread(input_df, X.var, X.value, convert_type=True)
+    self.assertTrue(spread_test_df.equals(input_pd))
+
   def test_spread_2(self):
     input_df = DplyFrame(pd.read_csv(StringIO("""country,year,key,value
 1,Afghanistan,1999,cases,745
@@ -1232,6 +1251,23 @@ China,2000,213766,1280428583""")))
 1,Afghanistan,1999,cases,745
 2,Afghanistan,1999,cases,19987071""")))
     self.assertRaises(ValueError, spread, input_df, X.key, X.value)
+
+  def test_convert_full(self):
+    input_df = DplyFrame(pd.read_csv(StringIO("""group,id,type
+MDSJLZJUBXDC,val0,True
+MDSJLZJUBXDC,val1,1880-05-23 21:41:43.522000
+MDSJLZJUBXDC,val2,FSWDFMNKRQVW
+MDSJLZJUBXDC,val3,691.031903
+FVETRDSFZOYL,val0,F
+FVETRDSFZOYL,val1,2050-12-15
+FVETRDSFZOYL,val2,GNRUCSKRCJNR
+FVETRDSFZOYL,val3,172.891357""")))
+    input_pd = DplyFrame(pd.read_csv(StringIO("""group,val0,val1,val2,val3
+FVETRDSFZOYL,False,2050-12-15 00:00:00.000,GNRUCSKRCJNR,172.891357
+MDSJLZJUBXDC,True,1880-05-23 21:41:43.522,FSWDFMNKRQVW,691.031903""")))
+    input_pd['val1'] = pd.to_datetime(input_pd['val1'])
+    spread_test_df = input_df >> spread(X.id, X.type, convert_type=True)
+    self.assertTrue(spread_test_df.equals(input_pd))
 
 
 if __name__ == '__main__':
