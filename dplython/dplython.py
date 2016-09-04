@@ -842,7 +842,7 @@ class spread(Verb):
     out_df = out_df.set_index('temp_index_for_reshape')
     new_spread_data = out_df[[key._name, values._name]]
     if not all(new_spread_data.groupby([new_spread_data.index, key._name]).agg('count').reset_index()[values._name] < 2):
-      raise ValueError('Duplicate identifers')
+      raise ValueError('Duplicate identifiers')
     new_data = new_spread_data.pivot(columns=key._name, values=values._name)
     if ('convert_type' in self.kwargs
         and self.kwargs['convert_type']
