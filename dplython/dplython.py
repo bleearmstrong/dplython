@@ -841,10 +841,54 @@ class spread(Verb):
     if not all(new_spread_data.groupby([new_spread_data.index, key._name]).agg('count').reset_index()[values._name] < 2):
       raise ValueError('Duplicate identifers')
     new_data = new_spread_data.pivot(columns=key._name, values=values._name)
-    if ('convert_numeric' in self.kwargs
-        and self.kwargs['convert_numeric']
+    # if ('convert_numeric' in self.kwargs
+    #     and self.kwargs['convert_numeric']
+    #     and out_df[values._name].dtype.kind in 'OSaU'):
+    #   new_data = new_data.apply(lambda x: pd.to_numeric(x, errors='ignore'))
+    if ('convert_type' in self.kwargs
+        and self.kwargs['convert_type']
         and out_df[values._name].dtype.kind in 'OSaU'):
-      new_data = new_data.apply(lambda x: pd.to_numeric(x, errors='ignore'))
+      columns_to_convert = [col for col in new_data if col not in df.columns]
+      new_data = convert_type(new_data, columns_to_convert)
     old_data = out_df[spread_index_columns].drop_duplicates()
     output_data = old_data.merge(new_data, left_index=True, right_index=True).reset_index(drop=True)
     return output_data
+
+def convert_type(df, columns):
+    # convert type
+    # general plan: for each column we're interested in converting,
+    # sample some rows from that column, dropping missing values,
+    # and try to convert it to a given type
+    # if any types fail, then it's not that type
+    # in worst case scenario, leave as is
+    # (designed to work on string columns)
+    type_dic = {col: None for col in columns}
+    out_df = df.copy()
+    for col in columns:
+        temp_col = out_df[col].copy().dropna()
+        n_sample = min(100, int(.1 * len(temp_col)) + 1)
+        temp_col = temp_col.sample(n=n_sample)
+        # check boolean:
+        if len(set(temp_col.values)) > 0 and set(temp_col.values) < {'True', 'False', 'T', 'F', 'TRUE', 'FALSE'}:
+            type_dic[col] = 'boolean'
+            continue
+        # check numeric:
+        test_numeric = pd.to_numeric(temp_col, errors='coerce')
+        if test_numeric.isnull().sum() == 0:
+            type_dic[col] = 'numeric'
+            continue
+        # check datetime:
+        test_datetime = pd.to_datetime(temp_col, errors='coerce')
+        if test_datetime.isnull().sum() == 0:
+            type_dic[col] = 'datetime'
+            continue
+    d = {'True': True, 'False': False, 'T': True, 'F': False, 'TRUE': True, 'FALSE': False}
+    for col in columns:
+        if type_dic[col] == 'boolean':
+            out_df[col] = out_df[col].map(d)
+        if type_dic[col] == 'numeric':
+            out_df[col] = pd.to_numeric(out_df[col], errors='ignore')
+        if type_dic[col] == 'datetime':
+            out_df[col] = pd.to_datetime(out_df[col], errors='ignore', infer_datetime_format=True)
+    return out_df
+
